@@ -101,10 +101,11 @@ router.post(
       const recipient = to || lastEmail?.from_email;
 
       if (!recipient) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: "Recipient email could not be determined.",
         });
+        return;
       }
 
       const gmail = getGmailClient(account);

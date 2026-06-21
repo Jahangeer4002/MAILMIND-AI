@@ -1,24 +1,28 @@
-import { google, gmail_v1 } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
-import { env, GMAIL_SCOPES } from '../config/env.js';
-import { logger } from '../config/logger.js';
-import { withRetry, extractEmailBody, parseEmailAddress } from '../utils/helpers.js';
-import { GmailAccount } from '../types/index.js';
+import { google, gmail_v1 } from "googleapis";
+import { OAuth2Client } from "google-auth-library";
+import { env, GMAIL_SCOPES } from "../config/env.js";
+import { logger } from "../config/logger.js";
+import {
+  withRetry,
+  extractEmailBody,
+  parseEmailAddress,
+} from "../utils/helpers.js";
+import { GmailAccount } from "../types/index.js";
 
 export function createOAuth2Client(): OAuth2Client {
   return new google.auth.OAuth2(
     env.GOOGLE_CLIENT_ID,
     env.GOOGLE_CLIENT_SECRET,
-    env.GOOGLE_REDIRECT_URI
+    env.GOOGLE_REDIRECT_URI,
   );
 }
 
 export function getAuthUrl(): string {
   const client = createOAuth2Client();
   return client.generateAuthUrl({
-    access_type: 'offline',
+    access_type: "offline",
     scope: GMAIL_SCOPES,
-    prompt: 'consent',
+    prompt: "consent",
   });
 }
 
@@ -31,7 +35,7 @@ export async function exchangeCodeForTokens(code: string) {
 export async function getUserProfile(accessToken: string) {
   const client = createOAuth2Client();
   client.setCredentials({ access_token: accessToken });
-  const oauth2 = google.oauth2({ version: 'v2', auth: client });
+  const oauth2 = google.oauth2({ version: "v2", auth: client });
   const { data } = await oauth2.userinfo.get();
   return data;
 }
@@ -43,13 +47,13 @@ export function getGmailClient(account: GmailAccount): gmail_v1.Gmail {
     refresh_token: account.refresh_token ?? undefined,
   });
 
-  client.on('tokens', (tokens) => {
+  client.on("tokens", (tokens) => {
     if (tokens.access_token) {
-      logger.debug('Gmail tokens refreshed');
+      logger.debug("Gmail tokens refreshed");
     }
   });
 
-  return google.gmail({ version: 'v1', auth: client });
+  return google.gmail({ version: "v1", auth: client });
 }
 
 export async function refreshAccessToken(refreshToken: string) {
@@ -62,11 +66,11 @@ export async function refreshAccessToken(refreshToken: string) {
 export async function listMessageIds(
   gmail: gmail_v1.Gmail,
   pageToken?: string,
-  maxResults = 100
+  maxResults = 100,
 ): Promise<{ ids: string[]; nextPageToken?: string }> {
   return withRetry(async () => {
     const res = await gmail.users.messages.list({
-      userId: 'me',
+      userId: "me",
       maxResults,
       pageToken,
     });
@@ -74,52 +78,57 @@ export async function listMessageIds(
       ids: (res.data.messages ?? []).map((m) => m.id!),
       nextPageToken: res.data.nextPageToken ?? undefined,
     };
-  }, 'gmail-list-messages');
+  }, "gmail-list-messages");
 }
 
 export async function getMessage(gmail: gmail_v1.Gmail, messageId: string) {
   return withRetry(async () => {
     const res = await gmail.users.messages.get({
-      userId: 'me',
+      userId: "me",
       id: messageId,
-      format: 'full',
+      format: "full",
     });
     return res.data;
-  }, 'gmail-get-message');
+  }, "gmail-get-message");
 }
 
 export async function getThread(gmail: gmail_v1.Gmail, threadId: string) {
   return withRetry(async () => {
     const res = await gmail.users.threads.get({
-      userId: 'me',
+      userId: "me",
       id: threadId,
-      format: 'full',
+      format: "full",
     });
     return res.data;
-  }, 'gmail-get-thread');
+  }, "gmail-get-thread");
 }
 
 export async function listLabels(gmail: gmail_v1.Gmail) {
   return withRetry(async () => {
-    const res = await gmail.users.labels.list({ userId: 'me' });
+    const res = await gmail.users.labels.list({ userId: "me" });
     return res.data.labels ?? [];
-  }, 'gmail-list-labels');
+  }, "gmail-list-labels");
 }
 
 export async function getHistory(
   gmail: gmail_v1.Gmail,
   startHistoryId: string,
-  pageToken?: string
+  pageToken?: string,
 ) {
   return withRetry(async () => {
     const res = await gmail.users.history.list({
-      userId: 'me',
+      userId: "me",
       startHistoryId,
-      historyTypes: ['messageAdded', 'messageDeleted', 'labelAdded', 'labelRemoved'],
+      historyTypes: [
+        "messageAdded",
+        "messageDeleted",
+        "labelAdded",
+        "labelRemoved",
+      ],
       pageToken,
     });
     return res.data;
-  }, 'gmail-history');
+  }, "gmail-history");
 }
 
 export async function sendEmail(
@@ -129,62 +138,70 @@ export async function sendEmail(
   body: string,
   threadId?: string,
   inReplyTo?: string,
-  references?: string
+  references?: string,
 ) {
   const headers = [
     `To: ${to}`,
-    `Subject: ${subject}`,
-    'Content-Type: text/plain; charset=utf-8',
-    'MIME-Version: 1.0',
+    `Subject: ${subject.startsWith("Re:") ? subject : `Re: ${subject}`}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "MIME-Version: 1.0",
   ];
 
   if (inReplyTo) headers.push(`In-Reply-To: ${inReplyTo}`);
   if (references) headers.push(`References: ${references}`);
 
-  const raw = Buffer.from(`${headers.join('\r\n')}\r\n\r\n${body}`)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  const raw = Buffer.from(`${headers.join("\r\n")}\r\n\r\n${body}`)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
   return withRetry(async () => {
     const res = await gmail.users.messages.send({
-      userId: 'me',
+      userId: "me",
       requestBody: {
         raw,
         threadId,
       },
     });
     return res.data;
-  }, 'gmail-send');
+  }, "gmail-send");
 }
 
 export function parseGmailMessage(message: gmail_v1.Schema$Message) {
   const headers = message.payload?.headers ?? [];
   const getHeader = (name: string) =>
-    headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? '';
+    headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ??
+    "";
 
-  const { text, html } = extractEmailBody((message.payload ?? {}) as Parameters<typeof extractEmailBody>[0]);
-  const from = parseEmailAddress(getHeader('From'));
+  const { text, html } = extractEmailBody(
+    (message.payload ?? {}) as Parameters<typeof extractEmailBody>[0],
+  );
+  const from = parseEmailAddress(getHeader("From"));
 
   return {
     gmail_message_id: message.id!,
     gmail_thread_id: message.threadId!,
-    subject: getHeader('Subject'),
+    subject: getHeader("Subject"),
     from_email: from.email,
     from_name: from.name,
-    to_emails: getHeader('To').split(',').map((e) => parseEmailAddress(e.trim()).email),
-    cc_emails: getHeader('Cc').split(',').filter(Boolean).map((e) => parseEmailAddress(e.trim()).email),
+    to_emails: getHeader("To")
+      .split(",")
+      .map((e) => parseEmailAddress(e.trim()).email),
+    cc_emails: getHeader("Cc")
+      .split(",")
+      .filter(Boolean)
+      .map((e) => parseEmailAddress(e.trim()).email),
     body_text: text,
     body_html: html,
-    snippet: message.snippet ?? '',
+    snippet: message.snippet ?? "",
     received_at: message.internalDate
       ? new Date(parseInt(message.internalDate)).toISOString()
       : null,
-    is_unread: (message.labelIds ?? []).includes('UNREAD'),
+    is_unread: (message.labelIds ?? []).includes("UNREAD"),
     label_ids: message.labelIds ?? [],
-    in_reply_to: getHeader('In-Reply-To') || null,
-    references_header: getHeader('References') || null,
+    in_reply_to: getHeader("In-Reply-To") || null,
+    references_header: getHeader("References") || null,
     headers: Object.fromEntries(headers.map((h) => [h.name!, h.value!])),
   };
 }

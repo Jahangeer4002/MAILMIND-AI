@@ -1,17 +1,19 @@
-import { useParams, Link } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { ArrowLeft, Reply, Sparkles } from 'lucide-react';
-import { emailsApi, summaryApi, composeApi } from '../services/api';
-import { useState } from 'react';
-import { Email } from '../types';
+import { useParams, Link } from "react-router-dom";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { ArrowLeft, Reply, Sparkles } from "lucide-react";
+import { emailsApi, summaryApi, composeApi } from "../services/api";
+import { useState } from "react";
+import { Email } from "../types";
 
 export default function ThreadPage() {
   const { id } = useParams<{ id: string }>();
-  const [replyInstruction, setReplyInstruction] = useState('');
-  const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
+  const [replyInstruction, setReplyInstruction] = useState("");
+  const [draft, setDraft] = useState<{ subject: string; body: string } | null>(
+    null,
+  );
 
   const { data: thread, isLoading } = useQuery({
-    queryKey: ['thread', id],
+    queryKey: ["thread", id],
     queryFn: async () => {
       const res = await emailsApi.getThread(id!);
       return res.data.thread;
@@ -20,7 +22,7 @@ export default function ThreadPage() {
   });
 
   const { data: summary } = useQuery({
-    queryKey: ['thread-summary', id],
+    queryKey: ["thread-summary", id],
     queryFn: async () => {
       const res = await summaryApi.thread(id!);
       return res.data.summary;
@@ -33,7 +35,17 @@ export default function ThreadPage() {
       composeApi.reply({ threadId: id, instruction }),
     onSuccess: (res) => setDraft(res.data.draft),
   });
-
+  const sendMutation = useMutation({
+    mutationFn: () =>
+      composeApi.reply({
+        threadId: id,
+        instruction: replyInstruction,
+        send: true,
+      }),
+    onSuccess: () => {
+      alert("Reply sent successfully!");
+    },
+  });
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -46,13 +58,20 @@ export default function ThreadPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Link to="/inbox" className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700">
+      <Link
+        to="/inbox"
+        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+      >
         <ArrowLeft className="h-4 w-4" /> Back to Inbox
       </Link>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h1 className="text-xl font-bold text-gray-900">{thread.subject || '(No subject)'}</h1>
-        <p className="mt-1 text-sm text-gray-500">{thread.message_count} messages</p>
+        <h1 className="text-xl font-bold text-gray-900">
+          {thread.subject || "(No subject)"}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          {thread.message_count} messages
+        </p>
 
         {summary && (
           <div className="mt-4 rounded-lg bg-primary-50 p-4">
@@ -60,30 +79,38 @@ export default function ThreadPage() {
               <Sparkles className="h-4 w-4" /> Thread Summary
             </div>
             <p className="mt-2 text-sm text-primary-900">
-  {typeof summary === "string"
-    ? summary
-    : summary?.summary ?? ""}
-</p>
+              {typeof summary === "string" ? summary : (summary?.summary ?? "")}
+            </p>
           </div>
         )}
       </div>
 
       <div className="space-y-4">
-        {(thread.emails as Email[] ?? []).map((email) => (
-          <div key={email.id} className="rounded-xl border border-gray-200 bg-white p-6">
+        {((thread.emails as Email[]) ?? []).map((email) => (
+          <div
+            key={email.id}
+            className="rounded-xl border border-gray-200 bg-white p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-gray-900">{email.from_name || email.from_email}</p>
+                <p className="font-semibold text-gray-900">
+                  {email.from_name || email.from_email}
+                </p>
                 <p className="text-xs text-gray-400">
-                  {email.received_at ? new Date(email.received_at).toLocaleString() : ''}
+                  {email.received_at
+                    ? new Date(email.received_at).toLocaleString()
+                    : ""}
                 </p>
               </div>
-              <Link to={`/emails/${email.id}`} className="text-xs text-primary-600 hover:underline">
+              <Link
+                to={`/emails/${email.id}`}
+                className="text-xs text-primary-600 hover:underline"
+              >
                 View details
               </Link>
             </div>
             <div className="mt-4 whitespace-pre-wrap text-sm text-gray-700">
-              {email.body_text || email.snippet || 'No content'}
+              {email.body_text || email.snippet || "No content"}
             </div>
           </div>
         ))}
@@ -105,13 +132,26 @@ export default function ThreadPage() {
           disabled={!replyInstruction || replyMutation.isPending}
           className="mt-3 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
         >
-          {replyMutation.isPending ? 'Generating...' : 'Generate Reply'}
+          {replyMutation.isPending ? "Generating..." : "Generate Reply"}
         </button>
 
         {draft && (
           <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-700">Subject: {draft.subject}</p>
-            <pre className="mt-2 whitespace-pre-wrap text-sm text-gray-600">{draft.body}</pre>
+            <p className="text-sm font-medium text-gray-700">
+              Subject: {draft.subject}
+            </p>
+
+            <pre className="mt-2 whitespace-pre-wrap text-sm text-gray-600">
+              {draft.body}
+            </pre>
+
+            <button
+              onClick={() => sendMutation.mutate()}
+              disabled={sendMutation.isPending}
+              className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              {sendMutation.isPending ? "Sending..." : "Send Reply"}
+            </button>
           </div>
         )}
       </div>

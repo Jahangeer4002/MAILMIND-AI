@@ -99,7 +99,13 @@ router.post(
 
       const lastEmail = (thread.emails ?? []).slice(-1)[0];
       const recipient = to || lastEmail?.from_email;
-      if (!recipient) throw new AppError(400, "Recipient not found");
+
+      if (!recipient) {
+        return res.status(400).json({
+          success: false,
+          message: "Recipient email could not be determined.",
+        });
+      }
 
       const gmail = getGmailClient(account);
       await sendEmail(

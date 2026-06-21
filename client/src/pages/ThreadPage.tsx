@@ -45,6 +45,9 @@ export default function ThreadPage() {
     onSuccess: () => {
       alert("Reply sent successfully!");
     },
+    onError: (err: any) => {
+      console.log(err.response?.data);
+    },
   });
   if (isLoading) {
     return (

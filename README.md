@@ -26,18 +26,18 @@ MailMind AI is an AI-powered Gmail Intelligence Platform that helps users manage
 
 # 🛠️ Tech Stack
 
-| Layer | Technology |
-|---------|------------|
-| Frontend | React, TypeScript, Vite, Tailwind CSS |
-| State Management | Zustand |
-| Data Fetching | TanStack Query |
-| Backend | Node.js, Express.js, TypeScript |
-| Database | Supabase PostgreSQL |
-| Authentication | Google OAuth 2.0 |
-| AI Models | Google Gemini API |
-| Embeddings | NVIDIA NIM |
-| Vector Search | pgvector |
-| Deployment | Vercel (Frontend), Render (Backend) |
+| Layer            | Technology                            |
+| ---------------- | ------------------------------------- |
+| Frontend         | React, TypeScript, Vite, Tailwind CSS |
+| State Management | Zustand                               |
+| Data Fetching    | TanStack Query                        |
+| Backend          | Node.js, Express.js, TypeScript       |
+| Database         | Supabase PostgreSQL                   |
+| Authentication   | Google OAuth 2.0                      |
+| AI Models        | Google Gemini API                     |
+| Embeddings       | NVIDIA NIM                            |
+| Vector Search    | pgvector                              |
+| Deployment       | Vercel (Frontend), Render (Backend)   |
 
 ---
 
@@ -133,24 +133,24 @@ http://localhost:5020/api/auth/google/callback
 
 # 📡 API Endpoints
 
-| Method | Endpoint | Description |
-|----------|----------------------------------|------------------------|
-| GET | `/api/auth/google` | Get Google OAuth URL |
-| GET | `/api/auth/google/callback` | OAuth callback |
-| GET | `/api/auth/me` | Current authenticated user |
-| POST | `/api/auth/logout` | Logout |
-| POST | `/api/gmail/sync` | Trigger Gmail synchronization |
-| GET | `/api/gmail/status` | Gmail sync status |
-| GET | `/api/emails` | List emails |
-| GET | `/api/emails/:id` | Get email details |
-| GET | `/api/emails/threads/:id` | Get thread details |
-| GET | `/api/summary/emails/:id/summary` | Email summary |
-| GET | `/api/summary/threads/:id/summary` | Thread summary |
-| POST | `/api/compose` | Generate email draft |
-| POST | `/api/reply` | Generate AI reply |
-| GET | `/api/categories` | Category statistics |
-| POST | `/api/chat` | AI Assistant |
-| GET | `/api/newsletter/digest` | Newsletter digest |
+| Method | Endpoint                           | Description                   |
+| ------ | ---------------------------------- | ----------------------------- |
+| GET    | `/api/auth/google`                 | Get Google OAuth URL          |
+| GET    | `/api/auth/google/callback`        | OAuth callback                |
+| GET    | `/api/auth/me`                     | Current authenticated user    |
+| POST   | `/api/auth/logout`                 | Logout                        |
+| POST   | `/api/gmail/sync`                  | Trigger Gmail synchronization |
+| GET    | `/api/gmail/status`                | Gmail sync status             |
+| GET    | `/api/emails`                      | List emails                   |
+| GET    | `/api/emails/:id`                  | Get email details             |
+| GET    | `/api/emails/threads/:id`          | Get thread details            |
+| GET    | `/api/summary/emails/:id/summary`  | Email summary                 |
+| GET    | `/api/summary/threads/:id/summary` | Thread summary                |
+| POST   | `/api/compose`                     | Generate email draft          |
+| POST   | `/api/reply`                       | Generate AI reply             |
+| GET    | `/api/categories`                  | Category statistics           |
+| POST   | `/api/chat`                        | AI Assistant                  |
+| GET    | `/api/newsletter/digest`           | Newsletter digest             |
 
 ---
 
@@ -238,6 +238,7 @@ Configure production environment variables including:
 - Very large inboxes may require multiple sync operations.
 
 ---
+
 # 🌐 Live Deployment
 
 **Frontend (Vercel):**  
@@ -250,4 +251,20 @@ https://mailmind-ai-5f9u.onrender.com
 https://mailmind-ai-5f9u.onrender.com/api/health
 
 ---
+
+## Demo Account
+
+To test MailMind AI, use the following demo Gmail account:
+
+- **Email:** `mailmindai77@gmail.com`
+- **Password:** `Mailmindai@33`
+
+> **Note:**
+>
+> - This account is provided for evaluation and testing purposes only.
+> - Please do not change the password or account settings.
+> - If login fails, the demo account may have reached its usage limit or been temporarily disabled.
+
+---
+
 > Developed with ❤️ by **Md Jahangeer**
